@@ -1,82 +1,96 @@
-import express from "express";
-import bodyParser from "body-parser";
-import axios from "axios";
+import express from 'express';
+import bodyParser from 'body-parser';
+import methodOverride from 'method-override';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+// Import routes
+import postsRoutes from './routes/posts.js';
+import pagesRoutes from './routes/pages.js';
+
+// Import database connection
+import connectDB from './config/database.js';
+
+// Load environment variables
+dotenv.config();
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
-const port = 3000;
-const API_URL = "http://localhost:4000";
+const PORT = process.env.PORT || 3000;
 
-app.use(express.static("public"));
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(methodOverride('_method')); // For forms to support PUT/PATCH/DELETE
 
-// Route to render the main page
-app.get("/", async (req, res) => {
-  try {
-    const response = await axios.get(`${API_URL}/posts`);
-    console.log(response);
-    res.render("index.ejs", { posts: response.data });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching posts" });
-  }
+// Set view engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Routes
+app.use('/api', postsRoutes); // API routes under /api
+app.use('/', pagesRoutes);    // Page routes
+
+// 404 handler - middleware instead of EJS
+app.use((req, res) => {
+  res.status(404).send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Page Not Found</title>
+      <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        h1 { color: #dc3545; }
+        a { color: #007bff; text-decoration: none; }
+      </style>
+    </head>
+    <body>
+      <h1>404 - Page Not Found</h1>
+      <p>The page you're looking for doesn't exist.</p>
+      <a href="/">Go Home</a>
+    </body>
+    </html>
+  `);
 });
 
-// Route to render the edit page
-app.get("/new", (req, res) => {
-  res.render("modify.ejs", { heading: "New Post", submit: "Create Post" });
+// Error handler - middleware instead of EJS
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Server Error</title>
+      <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        h1 { color: #dc3545; }
+        a { color: #007bff; text-decoration: none; }
+      </style>
+    </head>
+    <body>
+      <h1>500 - Server Error</h1>
+      <p>Something went wrong on our end.</p>
+      <a href="/">Go Home</a>
+    </body>
+    </html>
+  `);
 });
 
-app.get("/edit/:id", async (req, res) => {
-  try {
-    const response = await axios.get(`${API_URL}/posts/${req.params.id}`);
-    console.log(response.data);
-    res.render("modify.ejs", {
-      heading: "Edit Post",
-      submit: "Update Post",
-      post: response.data,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching post" });
-  }
-});
-
-// Create a new post
-app.post("/api/posts", async (req, res) => {
-  try {
-    const response = await axios.post(`${API_URL}/posts`, req.body);
-    console.log(response.data);
-    res.redirect("/");
-  } catch (error) {
-    res.status(500).json({ message: "Error creating post" });
-  }
-});
-
-// Partially update a post
-app.post("/api/posts/:id", async (req, res) => {
-  console.log("called");
-  try {
-    const response = await axios.patch(
-      `${API_URL}/posts/${req.params.id}`,
-      req.body
-    );
-    console.log(response.data);
-    res.redirect("/");
-  } catch (error) {
-    res.status(500).json({ message: "Error updating post" });
-  }
-});
-
-// Delete a post
-app.get("/api/posts/delete/:id", async (req, res) => {
-  try {
-    await axios.delete(`${API_URL}/posts/${req.params.id}`);
-    res.redirect("/");
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting post" });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Backend server is running on http://localhost:${port}`);
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

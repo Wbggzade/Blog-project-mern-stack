@@ -1,38 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blog</title>
-  <link rel="stylesheet" href="/styles/main.css">
-  <!-- <script src="https://unpkg.com/axios/dist/axios.min.js"></script> -->
+  <title>My Blog</title>
+  <link rel="stylesheet" href="/styles/style.css">
 </head>
-
 <body>
   <div class="container">
     <h1>My Blog</h1>
-    <a id="newPostBtn" href="/new">New Post</a>
-    <ul id="postsList">
-      <% posts.forEach(post=> { %>
-        <li>
-          <h2>
-            <%=post.title%>
-          </h2>
-          <small>
-            <%=post.date %>
-          </small>
-          <p>
-            <%=post.content%>
-          </p>
-          <small>By: <%=post.author%> </small>
-          <a class="edit" href="/edit/<%= post.id %>">Edit</a>
-          <a class="delete" href="/api/posts/delete/<%= post.id %>">Delete</a>
-        </li>
-        <% }); %>
-    </ul>
+    <a href="/posts/new" class="btn btn-primary">Create New Post</a>
+
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+
+    <div class="posts">
+      <% posts.forEach(post => { %>
+        <div class="post">
+          <h2><%= post.title %></h2>
+          <div class="post-meta">
+            <span>By: <%= post.author %></span>
+            <span>Created: <%= new Date(post.createdAt).toLocaleDateString() %></span>
+          </div>
+          <p><%= post.content %></p>
+          <div class="post-actions">
+            <a href="/posts/<%= post._id %>/edit" class="btn btn-secondary">Edit</a>
+            <form action="/posts/<%= post._id %>/delete" method="POST" style="display: inline;">
+              <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+            </form>
+          </div>
+        </div>
+      <% }); %>
+    </div>
   </div>
-
 </body>
-
 </html>
