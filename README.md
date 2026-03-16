@@ -1,119 +1,174 @@
-# Blog App - React Frontend + Express API Backend
+# MERN Blog App (JWT Auth + User-Owned Posts)
 
-A full-stack blog application with React frontend and Express/MongoDB backend.
+Full-stack blog app with React (Vite) frontend and Express/MongoDB backend.
 
-## Features
+## Current Status
 
-- ✅ Create, read, update, delete blog posts
-- ✅ React frontend with routing
-- ✅ Express API with MongoDB
-- ✅ RESTful API endpoints
-- ✅ Loading states and error handling
-- ✅ Responsive design
+- JWT authentication is enabled (register, login, get current user)
+- Posts are protected by auth middleware
+- Posts are user-owned (each post is linked to the logged-in user)
+- Users can only view, edit, and delete their own posts
+- Frontend stores token in localStorage and sends `Authorization: Bearer <token>`
 
 ## Tech Stack
 
-- **Frontend:** React, React Router, Vite
-- **Backend:** Node.js, Express, MongoDB, Mongoose
-- **Development:** Concurrently for running both servers
+- Frontend: React, React Router, Vite
+- Backend: Node.js, Express, MongoDB, Mongoose
+- Auth: jsonwebtoken, bcryptjs
+
+## Main Features
+
+- Register and login
+- Password hashing with bcrypt
+- JWT token generation after register/login
+- Protected frontend routes
+- Protected backend routes
+- Create, read, update, delete posts (owned by authenticated user)
+- Clean error handling for unauthorized access
 
 ## Project Structure
 
-```
-blog-project/
-├── server.js              # Express API server
+```text
+Blog project/
+├── server.js
+├── .env
+├── .env.example
+├── package.json
 ├── config/
-│   └── database.js        # MongoDB connection
+│   └── database.js
 ├── controllers/
-│   └── postsController.js # API business logic
+│   ├── authController.js
+│   └── postsController.js
+├── middleware/
+│   └── authMiddleware.js
 ├── models/
-│   └── Post.js           # Mongoose schema
+│   ├── User.js
+│   └── Post.js
 ├── routes/
-│   └── posts.js          # API routes
-├── client/               # React frontend
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Home.jsx
-│   │   │   ├── NewPost.jsx
-│   │   │   └── EditPost.jsx
-│   │   ├── App.jsx
-│   │   └── App.css
-│   └── vite.config.js
-├── .env                  # Environment variables
-└── package.json
+│   ├── auth.js
+│   └── posts.js
+├── utils/
+│   └── generateToken.js
+└── client/
+	├── package.json
+	├── vite.config.js
+	└── src/
+		├── App.jsx
+		├── App.css
+		├── main.jsx
+		├── utils/
+		│   └── auth.js
+		└── components/
+			├── Home.jsx
+			├── NewPost.jsx
+			├── EditPost.jsx
+			├── Login.jsx
+			├── Register.jsx
+			└── ProtectedRoute.jsx
 ```
 
-## Setup Instructions
+## Environment Variables
 
-### Prerequisites
-- Node.js (v16+)
-- MongoDB (local installation or MongoDB Atlas)
+Create a `.env` file in the root:
 
-### 1. Install Dependencies
+```env
+PORT=3001
+MONGODB_URI=mongodb://localhost:27017/blog
+JWT_SECRET=your_jwt_secret_here
+```
+
+Notes:
+
+- Backend port fallback is `3001`.
+- `JWT_SECRET` is required for register/login to work.
+
+## Install
+
+From project root:
+
 ```bash
-# Install all dependencies (backend + frontend)
 npm run install:all
 ```
 
-### 2. Environment Setup
-- Copy `.env.example` to `.env`
-- Update `MONGODB_URI` with your MongoDB connection string
-- Default: `mongodb://localhost:27017/blog`
+This installs backend and frontend dependencies.
 
-### 3. Start MongoDB
-Make sure MongoDB is running locally or update the URI for cloud.
+## Run
 
-### 4. Run the Application
+### Option A: Run both with one command
 
-#### Development (both servers):
 ```bash
 npm run dev:full
 ```
+
+### Option B: Run separately
+
+Terminal 1 (backend):
+
+```bash
+npm run dev
+```
+
+Terminal 2 (frontend):
+
+```bash
+npm run client
+```
+
+Default URLs:
+
 - Backend: http://localhost:3001
 - Frontend: http://localhost:5173
 
-#### Production:
-```bash
-npm start  # Backend only
-npm run client  # Frontend only (after building)
-```
+If 5173 is in use, Vite will move to the next port automatically.
 
 ## API Endpoints
 
-- `GET /api/posts` - Get all posts
-- `GET /api/posts/:id` - Get single post
-- `POST /api/posts` - Create new post
-- `PATCH /api/posts/:id` - Update post
-- `DELETE /api/posts/:id` - Delete post
+### Auth
 
-## What Was Reused vs Changed
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me` (protected)
 
-### Reused (Backend - No Changes):
-- ✅ MongoDB connection (`config/database.js`)
-- ✅ Mongoose Post model (`models/Post.js`)
-- ✅ Posts controller (`controllers/postsController.js`)
-- ✅ API routes (`routes/posts.js`)
-- ✅ All CRUD logic and validation
-- ✅ Error handling in controllers
+### Posts (all protected)
 
-### Changed (Frontend Conversion):
-- ❌ Removed EJS views and page routes
-- ❌ Removed EJS rendering middleware
-- ✅ Added CORS to backend
-- ✅ Created React components with fetch calls
-- ✅ Added React Router for navigation
-- ✅ Configured Vite proxy for API calls
-- ✅ Added loading/error states in React
-- ✅ Responsive CSS for React components
+- `GET /api/posts`
+- `GET /api/posts/:id`
+- `POST /api/posts`
+- `PATCH /api/posts/:id`
+- `DELETE /api/posts/:id`
 
-### New Additions:
-- ✅ React frontend with Vite
-- ✅ Concurrent development setup
-- ✅ Proxy configuration for seamless API calls
+## Ownership Rules (Pass 2)
 
-## Development Notes
+- Post owner is always derived from authenticated user (`req.user`)
+- Client cannot set or spoof post owner
+- Client no longer sends editable `author` field
+- `author` display value is derived from authenticated username
+- Users can only access their own posts
 
-- The React app uses `/api` prefix for API calls, proxied to the backend
-- All original backend functionality preserved
-- Frontend handles loading states and user feedback
-- No Redux - kept simple with React hooks
+## Password Rules
+
+Registration password must:
+
+- Be at least 8 characters
+- Include at least one uppercase letter
+- Include at least one lowercase letter
+- Include at least one number
+
+This reduces weak password usage. Browser breach warnings can still appear if a known leaked password is used.
+
+## Notes About Older Data
+
+If older posts exist without a `user` field, they will not pass ownership checks.
+
+Recommended approach:
+
+- Keep app logic as-is for security
+- Do a one-time manual cleanup/migration for old posts if needed
+
+## Scripts
+
+- `npm run dev` - Run backend
+- `npm run client` - Run frontend
+- `npm run dev:full` - Run both backend and frontend
+- `npm run install:all` - Install backend + frontend dependencies
+- `npm start` - Start backend with node
