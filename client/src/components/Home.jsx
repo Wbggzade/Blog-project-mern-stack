@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { authFetch } from '../utils/auth.js';
 
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -13,7 +14,7 @@ function Home() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/posts');
+      const response = await authFetch('/api/posts');
       if (!response.ok) {
         throw new Error('Failed to fetch posts');
       }
@@ -33,11 +34,14 @@ function Home() {
     }
 
     try {
-      const response = await fetch(`/api/posts/${id}`, {
+      const response = await authFetch(`/api/posts/${id}`, {
         method: 'DELETE'
       });
 
       if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('You do not have permission to delete this post');
+        }
         throw new Error('Failed to delete post');
       }
 

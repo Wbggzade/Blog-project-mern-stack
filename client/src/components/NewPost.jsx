@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../utils/auth.js';
 
 function NewPost() {
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
-    author: ''
+    content: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -22,7 +22,7 @@ function NewPost() {
     e.preventDefault();
 
     // Basic validation
-    if (!formData.title.trim() || !formData.content.trim() || !formData.author.trim()) {
+    if (!formData.title.trim() || !formData.content.trim()) {
       setError('All fields are required');
       return;
     }
@@ -31,12 +31,12 @@ function NewPost() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/posts', {
+      const response = await authFetch('/api/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.content
+        })
       });
 
       if (!response.ok) {
@@ -67,18 +67,6 @@ function NewPost() {
             id="title"
             name="title"
             value={formData.title}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="author">Author:</label>
-          <input
-            type="text"
-            id="author"
-            name="author"
-            value={formData.author}
             onChange={handleChange}
             required
           />

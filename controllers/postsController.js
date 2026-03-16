@@ -1,22 +1,27 @@
 import Post from '../models/Post.js';
 
-// Get all posts
+// Get all posts for the authenticated user
 export const getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find().sort({ createdAt: -1 });
+    const posts = await Post.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.json(posts);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching posts', error: error.message });
   }
 };
 
-// Get a single post by ID
+// Get a single post by ID, only if owned by authenticated user
 export const getPostById = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
+
+    if (!post.user || !post.user.equals(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
     res.json(post);
   } catch (error) {
     if (error.name === 'CastError') {
@@ -26,20 +31,21 @@ export const getPostById = async (req, res) => {
   }
 };
 
-// Create a new post
+// Create a new post for authenticated user
 export const createPost = async (req, res) => {
   try {
-    const { title, content, author } = req.body;
+    const { title, content } = req.body;
 
     // Validation
-    if (!title || !content || !author) {
-      return res.status(400).json({ message: 'Title, content, and author are required' });
+    if (!title || !content) {
+      return res.status(400).json({ message: 'Title and content are required' });
     }
 
     const newPost = new Post({
       title: title.trim(),
       content,
-      author: author.trim()
+      author: req.user.username,
+      user: req.user._id
     });
 
     const savedPost = await newPost.save();
@@ -49,25 +55,31 @@ export const createPost = async (req, res) => {
   }
 };
 
-// Update a post (PATCH)
+// Update a post (PATCH) if owner
 export const updatePost = async (req, res) => {
   try {
-    const { title, content, author } = req.body;
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (!post.user || !post.user.equals(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { title, content } = req.body;
 
     const updateData = {};
     if (title !== undefined) updateData.title = title.trim();
     if (content !== undefined) updateData.content = content;
-    if (author !== undefined) updateData.author = author.trim();
+    // Keep display author trusted from authenticated user
+    updateData.author = req.user.username;
 
     const updatedPost = await Post.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true, runValidators: true }
     );
-
-    if (!updatedPost) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
 
     res.json(updatedPost);
   } catch (error) {
@@ -78,13 +90,19 @@ export const updatePost = async (req, res) => {
   }
 };
 
-// Delete a post
+// Delete a post if owner
 export const deletePost = async (req, res) => {
   try {
-    const deletedPost = await Post.findByIdAndDelete(req.params.id);
-    if (!deletedPost) {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
+
+    if (!post.user || !post.user.equals(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    await Post.findByIdAndDelete(req.params.id);
     res.json({ message: 'Post deleted successfully' });
   } catch (error) {
     if (error.name === 'CastError') {

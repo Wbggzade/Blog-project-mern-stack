@@ -15,6 +15,11 @@ const postSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Author is required'],
     trim: true
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User is required']
   }
 }, {
   timestamps: true // Adds createdAt and updatedAt fields

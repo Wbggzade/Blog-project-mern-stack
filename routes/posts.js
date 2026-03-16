@@ -6,8 +6,12 @@ import {
   updatePost,
   deletePost
 } from '../controllers/postsController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+// All post routes require a valid JWT.
+router.use(protect);
 
 // RESTful API routes for posts
 router.get('/posts', getAllPosts);          // GET /api/posts

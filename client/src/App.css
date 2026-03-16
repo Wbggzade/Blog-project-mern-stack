@@ -111,6 +111,20 @@ main {
   cursor: not-allowed;
 }
 
+.btn-link {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+  padding: 0;
+}
+
+.btn-link:hover {
+  opacity: 0.85;
+}
+
 /* Forms */
 .post-form {
   max-width: 600px;
@@ -221,6 +235,22 @@ main {
   margin-bottom: 20px;
   border: 1px solid #f5c6cb;
   text-align: center;
+}
+
+/* Auth input styling */
+.auth-form .form-group input {
+  background: #667eea;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.auth-form .form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-form .form-group input:focus {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
 }
 
 /* Responsive */

@@ -1,9 +1,9 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
 // Import routes
+import authRoutes from './routes/auth.js';
 import postsRoutes from './routes/posts.js';
 
 // Import database connection
@@ -16,14 +16,15 @@ dotenv.config();
 connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors()); // Enable CORS for React frontend
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api', postsRoutes);
 
 // 404 handler for API

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { authFetch } from '../utils/auth.js';
 
 function EditPost() {
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
-    author: ''
+    content: ''
   });
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -13,22 +13,20 @@ function EditPost() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  useEffect(() => {
-    fetchPost();
-  }, [id]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       setFetchLoading(true);
-      const response = await fetch(`/api/posts/${id}`);
+      const response = await authFetch(`/api/posts/${id}`);
       if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('You do not have permission to edit this post');
+        }
         throw new Error('Post not found');
       }
       const post = await response.json();
       setFormData({
         title: post.title,
-        content: post.content,
-        author: post.author
+        content: post.content
       });
       setError(null);
     } catch (err) {
@@ -36,7 +34,11 @@ function EditPost() {
     } finally {
       setFetchLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchPost();
+  }, [fetchPost]);
 
   const handleChange = (e) => {
     setFormData({
@@ -49,7 +51,7 @@ function EditPost() {
     e.preventDefault();
 
     // Basic validation
-    if (!formData.title.trim() || !formData.content.trim() || !formData.author.trim()) {
+    if (!formData.title.trim() || !formData.content.trim()) {
       setError('All fields are required');
       return;
     }
@@ -58,15 +60,18 @@ function EditPost() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/posts/${id}`, {
+      const response = await authFetch(`/api/posts/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.content
+        })
       });
 
       if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('You do not have permission to edit this post');
+        }
         throw new Error('Failed to update post');
       }
 
@@ -102,18 +107,6 @@ function EditPost() {
             id="title"
             name="title"
             value={formData.title}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="author">Author:</label>
-          <input
-            type="text"
-            id="author"
-            name="author"
-            value={formData.author}
             onChange={handleChange}
             required
           />
