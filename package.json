@@ -1,12 +1,16 @@
 {
-  "name": "6.1-blog-api-project",
+  "name": "blog-fullstack",
   "version": "1.0.0",
-  "description": "",
+  "description": "Blog app with React frontend and Express API backend",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "client": "cd client && npm run dev",
+    "client:install": "cd client && npm install",
+    "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
+    "install:all": "npm install && npm run client:install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,12 +18,13 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.20.2",
-    "ejs": "^3.1.9",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "method-override": "^3.0.0",
     "mongoose": "^8.0.0"
   },
   "devDependencies": {
+    "concurrently": "^8.2.0",
     "dotenv": "^16.0.0"
   }
 }
